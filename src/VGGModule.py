@@ -1,6 +1,6 @@
 import pytorch_lightning as pl
 import torch
-from torch.nn import Conv2d, MaxPool2d, Linear, ReLU
+from torch.nn import Conv2d, MaxPool2d, Linear, functional as F, ReLU
 from torchmetrics.functional import accuracy
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -65,30 +65,37 @@ class VGGModule(pl.LightningModule):
     y_one_hot = F.one_hot(y, 10).float()
     loss = F.cross_entropy(input=logits, target=y_one_hot)
 
-    self.log(f"loss/{step_name}", loss)
-    self.log(f"loss_{step_name}", loss)
-    
     preds = torch.argmax(logits, dim=1)
-    self.log(
-      f"acc/{step_name}", 
-      accuracy(preds=preds, target=y, task="multiclass", num_classes=10)
-    )
-    self.log(
-      f"acc_{step_name}", 
-      accuracy(preds=preds, target=y, task="multiclass", num_classes=10)
-    )
+    acc = accuracy(preds=preds, target=y, task="multiclass", num_classes=10)
 
-    return loss
+    if step_name != "predict":
+      self.log(f"loss/{step_name}", loss)
+      self.log(f"loss_{step_name}", loss)
+      self.log(f"acc/{step_name}", acc)
+      self.log(f"acc_{step_name}", acc)
+
+    return {
+      "loss": loss, 
+      "acc": acc
+    }
   
+
   def training_step(self, batch, batch_idx):
     return self._common_step(batch=batch, batch_idx=batch_idx, step_name="train")
   
+
   def validation_step(self, batch, batch_idx):
     return self._common_step(batch=batch, batch_idx=batch_idx, step_name="val")
   
+
   def test_step(self, batch, batch_idx):
     return self._common_step(batch=batch, batch_idx=batch_idx, step_name="test")
   
+
+  def predict_step(self, batch, batch_idx):
+    return self._common_step(batch=batch, batch_idx=batch_idx, step_name="predict")
+  
+
   def configure_optimizers(self):
     
     optimizer = torch.optim.SGD(
@@ -98,7 +105,7 @@ class VGGModule(pl.LightningModule):
         weight_decay=5e-4,
     )
     
-    steps_per_epoch = 45000 // self.hparams.batch_size
+    steps_per_epoch = 40192 // self.hparams.batch_size
     
     scheduler_dict = {
         "scheduler": OneCycleLR(
@@ -110,7 +117,6 @@ class VGGModule(pl.LightningModule):
         "interval": "step",
     }
     return {"optimizer": optimizer, "lr_scheduler": scheduler_dict}
- 
   
 
 def __main__():
