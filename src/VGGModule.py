@@ -1,6 +1,6 @@
 import pytorch_lightning as pl
 import torch
-from torch.nn import Conv2d, MaxPool2d, Linear, functional as F
+from torch.nn import Conv2d, MaxPool2d, Linear, ReLU
 from torchmetrics.functional import accuracy
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -16,24 +16,32 @@ class VGGModule(pl.LightningModule):
 
     self.conv_0 = Conv2d(in_channels=3, out_channels=32, kernel_size=3)
 
+    self.conv_0_act = ReLU()
+
     self.conv_1 = Conv2d(in_channels=32, out_channels=32, kernel_size=3)
+
+    self.conv_1_act = ReLU()
 
     self.pool_1 = MaxPool2d(kernel_size=2)
 
     self.fc_0 = Linear(in_features=6272, out_features=128)
 
+    self.fc_0_act = ReLU()
+
     self.fc_1 = Linear(in_features=128, out_features=10) 
+
+    self.fc_1_act = torch.nn.Softmax(dim=1)
 
   
   def forward(self, x):
 
     x = self.conv_0(x)
 
-    x = F.relu(x)
+    x = self.conv_0_act(x)
 
     x = self.conv_1(x)
 
-    x = F.relu(x)
+    x = self.conv_1_act(x)
 
     x = self.pool_1(x)
 
@@ -41,11 +49,11 @@ class VGGModule(pl.LightningModule):
 
     x = self.fc_0(x)
 
-    x = F.relu(x)
+    x = self.fc_0_act(x)
 
     x = self.fc_1(x)
 
-    x = F.softmax(input=x, dim=1)
+    x = self.fc_1_act(x)
 
     return x
   
