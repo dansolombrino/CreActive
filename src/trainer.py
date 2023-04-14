@@ -16,20 +16,26 @@ CKPT_DIR = f"../ckpts/{TRAIN_ID}"
 BATCH_SIZE = 256
 
 LR = 0.05
-MAX_EPOCHS = 10
+MAX_EPOCHS = 60
 
 PRECISION = "32-true"
 
 model = VGGModule(batch_size=BATCH_SIZE, lr=LR)
+
+logger = WandbLogger(entity="dansolombrino", project="CreActive", save_dir="../wandb")
+
+logger.experiment.config.update({
+  "train_id": TRAIN_ID   
+})
 
 trainer = Trainer(
   max_epochs=MAX_EPOCHS,
   accelerator="gpu",
   devices=1,
   precision=PRECISION,
-  logger=WandbLogger(entity="dansolombrino", project="CreActive", save_dir="../wandb"),
+  logger=logger,
   callbacks=[
-    LearningRateMonitor(logging_interval="epoch"), 
+    LearningRateMonitor(logging_interval="step"), 
     RichProgressBar(
       theme=RichProgressBarTheme(
         progress_bar="#C71585",
