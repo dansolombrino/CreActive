@@ -98,6 +98,7 @@ def __main__():
   )
 
   logger.experiment.config.update({
+    "train_id_loaded": TRAIN_ID_TO_LOAD,
     "og_model_schema": og_model_schema,
     "shuffled_model_schema": shuffled_model_schema
   })
