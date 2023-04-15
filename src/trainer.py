@@ -25,7 +25,8 @@ model = VGGModule(batch_size=BATCH_SIZE, lr=LR)
 logger = WandbLogger(entity="dansolombrino", project="CreActive", save_dir="../wandb")
 
 logger.experiment.config.update({
-  "train_id": TRAIN_ID   
+  "train_id": TRAIN_ID,
+  "og_model_schema": dict(model.__dict__["_modules"])
 })
 
 trainer = Trainer(
